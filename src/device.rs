@@ -107,6 +107,31 @@ impl<'a> Device<'a> {
             None
         }
     }
+    
+    /// Return the first ancestor of the device which matches the given
+    /// subsystem and devtype criteria.
+    pub fn parent_with_subsystem_devtype<T: AsRef<OsStr>>
+          (&self, subsystem: T, devtype: T) -> Option<Device> {
+        let subsystem = ::util::os_str_to_cstring(subsystem).expect("Failed to convert string");
+        let devtype = ::util::os_str_to_cstring(devtype).expect("Failed to convert string");
+        
+        let ptr = unsafe {
+          ::ffi::udev_device_get_parent_with_subsystem_devtype(self.device, subsystem.as_ptr(), devtype.as_ptr())
+        };
+
+        if !ptr.is_null() {
+            unsafe {
+                ::ffi::udev_device_ref(ptr);
+            }
+
+            Some(Device {
+                _context: self._context,
+                device: ptr,
+            })
+        } else {
+            None
+        }
+    }
 
     /// Returns the subsystem name of the device.
     ///
